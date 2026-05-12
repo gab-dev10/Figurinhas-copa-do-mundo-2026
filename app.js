@@ -86,7 +86,7 @@
     }
 
     function calcularResumo(transacoes) {
-        let gasto = 0, ganho = 0, figCompradas = 0, figVendidas = 0, figTrocadas = 0, pacotes = 0;
+        let gasto = 0, ganho = 0, figCompradas = 0, figVendidas = 0, figTrocaSaida = 0, figTrocaEntrada = 0, pacotes = 0;
 
         transacoes.forEach(t => {
             const valor = parseFloat(t.valor_total) || 0;
@@ -101,7 +101,8 @@
                 ganho += valor;
                 figVendidas += qtdFig;
             } else if (t.tipo === 'TROCA') {
-                figTrocadas += qtdFig;
+                figTrocaSaida  += parseInt(t.qtd_figurinhas) || 0;
+                figTrocaEntrada += parseInt(t.qtd_figurinhas_entrada) || 0;
             }
         });
 
@@ -112,7 +113,8 @@
         setText('stat-ops', transacoes.length);
         setText('stat-fig-compradas', figCompradas);
         setText('stat-fig-vendidas', figVendidas);
-        setText('stat-fig-trocadas', figTrocadas);
+        setText('stat-fig-trocadas-saida', figTrocaSaida);
+        setText('stat-fig-trocadas-entrada', figTrocaEntrada);
         setText('stat-pacotes', `${pacotes} pacote${pacotes !== 1 ? 's' : ''}`);
 
         const elSaldo = document.getElementById('stat-saldo');
@@ -158,12 +160,13 @@
     }
 
     function renderizarGraficoPizza(transacoes) {
-        let compradas = 0, vendidas = 0, trocadas = 0;
+        let compradas = 0, vendidas = 0, trocaSaida = 0, trocaEntrada = 0;
         transacoes.forEach(t => {
             const q = parseInt(t.qtd_figurinhas) || 0;
             if (t.tipo === 'COMPRA_PACOTE' || t.tipo === 'COMPRA_AVULSA') compradas += q;
             else if (t.tipo === 'VENDA') vendidas += q;
-            else if (t.tipo === 'TROCA') trocadas += q;
+            else if (t.tipo === 'TROCA_SAIDA') trocaSaida += q;
+            else if (t.tipo === 'TROCA_ENTRADA') trocaEntrada += q;
         });
 
         const ctx = document.getElementById('chart-pizza');
@@ -173,8 +176,8 @@
         state.chartPizza = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Compradas', 'Vendidas', 'Trocadas'],
-                datasets: [{ data: [compradas, vendidas, trocadas], backgroundColor: ['#60a5fa', '#4ade80', '#c084fc'] }]
+                labels: ['Compradas', 'Vendidas', 'Trocas Saída', 'Trocas Entrada'],
+                datasets: [{ data: [compradas, vendidas, trocaSaida, trocaEntrada], backgroundColor: ['#60a5fa', '#4ade80', '#f87171', '#c084fc'] }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
@@ -249,7 +252,7 @@
         document.querySelectorAll('.tipo-btn').forEach(btn => {
             btn.addEventListener('click', () => selecionarTipo(btn.dataset.tipo));
         });
-        const inputs = [['f-qtd-pacotes', calcularPacote], ['f-valor-pacote', calcularPacote], ['f-qtd-avulsa', calcularAvulsa], ['f-valor-avulsa', calcularAvulsa], ['f-qtd-venda', calcularVenda], ['f-valor-venda', calcularVenda]];
+        const inputs = [['f-qtd-pacotes', calcularPacote], ['f-valor-pacote', calcularPacote], ['f-qtd-avulsa', calcularAvulsa], ['f-valor-avulsa', calcularAvulsa], ['f-qtd-venda', calcularVenda], ['f-valor-venda', calcularVenda], ['f-qtd-troca-saida', calcularTroca], ['f-qtd-troca-entrada', calcularTroca]];
         inputs.forEach(([id, func]) => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', func);
@@ -285,6 +288,17 @@
         if (el) el.innerHTML = `${q} figs × R$ ${v.toFixed(2)} = <b>${brl(q * v)}</b>`;
     }
 
+    function calcularTroca() {
+        const saida   = parseFloat(document.getElementById('f-qtd-troca-saida').value) || 0;
+        const entrada = parseFloat(document.getElementById('f-qtd-troca-entrada').value) || 0;
+        const el = document.getElementById('preview-troca');
+        if (el) {
+            const saldo = entrada - saida;
+            const sinal = saldo > 0 ? '+' : '';
+            el.innerHTML = `📤 Você dá <b>${saida}</b> fig. &nbsp;→&nbsp; 📥 Você recebe <b>${entrada}</b> fig. &nbsp;|&nbsp; Saldo: <b>${sinal}${saldo}</b> figurinha${Math.abs(saldo) !== 1 ? 's' : ''}`;
+        }
+    }
+
     async function salvarLancamento() {
         const tipo = state.tipoAtual;
         const data = document.getElementById('f-data').value;
@@ -302,8 +316,13 @@
                 const v = parseFloat(document.getElementById(`f-valor-${prefix}`).value);
                 registro.qtd_figurinhas = q; registro.valor_unitario = v; registro.valor_total = q * v;
             } else if (tipo === 'TROCA') {
-                registro.qtd_figurinhas = parseInt(document.getElementById('f-qtd-troca').value);
-                registro.valor_total = 0;
+                const saida   = parseInt(document.getElementById('f-qtd-troca-saida').value);
+                const entrada = parseInt(document.getElementById('f-qtd-troca-entrada').value);
+                if (!saida || saida < 1)     { mostrarToast('Informe a quantidade de saída.', 'erro'); return; }
+                if (!entrada || entrada < 1) { mostrarToast('Informe a quantidade de entrada.', 'erro'); return; }
+                registro.qtd_figurinhas         = saida;
+                registro.qtd_figurinhas_entrada = entrada;
+                registro.valor_total            = 0;
             }
             let error;
             if (state.editandoId) {
@@ -341,7 +360,9 @@
                 document.getElementById('f-valor-venda').value = data.valor_unitario;
                 calcularVenda();
             } else if (data.tipo === 'TROCA') {
-                document.getElementById('f-qtd-troca').value = data.qtd_figurinhas;
+                document.getElementById('f-qtd-troca-saida').value   = data.qtd_figurinhas;
+                document.getElementById('f-qtd-troca-entrada').value = data.qtd_figurinhas_entrada || '';
+                calcularTroca();
             }
         } catch (e) { alert(e.message); }
     };
@@ -359,7 +380,7 @@
     }
 
     function limparFormulario() {
-        ['f-qtd-pacotes','f-valor-pacote','f-qtd-avulsa','f-valor-avulsa','f-qtd-venda','f-valor-venda','f-qtd-troca','f-obs'].forEach(id => {
+        ['f-qtd-pacotes','f-valor-pacote','f-qtd-avulsa','f-valor-avulsa','f-qtd-venda','f-valor-venda','f-qtd-troca-saida','f-qtd-troca-entrada','f-obs'].forEach(id => {
             const el = document.getElementById(id); if (el) el.value = '';
         });
         definirDataHoje();
@@ -406,7 +427,13 @@
     function brl(v) { return 'R$ ' + (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }); }
     function formatarData(iso) { if (!iso) return '—'; const [a, m, d] = iso.split('-'); return `${d}/${m}/${a.slice(2)}`; }
     function badgeTipo(t) {
-        const m = { 'COMPRA_PACOTE': ['badge-compra-pacote', '📦 Pacote'], 'COMPRA_AVULSA': ['badge-compra-avulsa', '🎴 Avulsa'], 'VENDA': ['badge-venda', '🏷️ Venda'], 'TROCA': ['badge-troca', '🔃 Troca'] };
+        const m = {
+            'COMPRA_PACOTE':  ['badge-compra-pacote', '📦 Pacote'],
+            'COMPRA_AVULSA':  ['badge-compra-avulsa', '🎴 Avulsa'],
+            'VENDA':          ['badge-venda',          '🏷️ Venda'],
+            'TROCA_SAIDA':    ['badge-troca-saida',    '🔃 Troca Saída'],
+            'TROCA_ENTRADA':  ['badge-troca-entrada',  '🔃 Troca Entrada'],
+        };
         const [c, l] = m[t] || ['', t];
         return `<span class="badge ${c}">${l}</span>`;
     }

@@ -68,7 +68,7 @@
 
       <!-- Bloco 2: Cards de figurinhas -->
       <section class="section-title">Figurinhas</section>
-      <div class="cards-grid cards-3">
+      <div class="cards-grid cards-4">
         <div class="metric-card">
           <span class="card-icon">📦</span>
           <span class="card-label">Compradas</span>
@@ -80,10 +80,15 @@
           <span class="card-label">Vendidas</span>
           <span class="card-value" id="stat-fig-vendidas">0</span>
         </div>
-        <div class="metric-card">
-          <span class="card-icon">🔃</span>
-          <span class="card-label">Trocadas</span>
-          <span class="card-value" id="stat-fig-trocadas">0</span>
+        <div class="metric-card card-troca-saida">
+          <span class="card-icon">📤</span>
+          <span class="card-label">Trocas Saída</span>
+          <span class="card-value" id="stat-fig-trocadas-saida">0</span>
+        </div>
+        <div class="metric-card card-troca-entrada">
+          <span class="card-icon">📥</span>
+          <span class="card-label">Trocas Entrada</span>
+          <span class="card-value" id="stat-fig-trocadas-entrada">0</span>
         </div>
       </div>
 
@@ -206,16 +211,19 @@
           </div>
 
           <!-- TROCA -->
-          <div class="campos-tipo" data-campos="TROCA">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="f-qtd-troca">Quantidade de Figurinhas Trocadas</label>
-                <input type="number" id="f-qtd-troca" min="1" placeholder="Ex: 4" />
-              </div>
+        <div class="campos-tipo" data-campos="TROCA">
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label for="f-qtd-troca-saida">📤 Figurinhas que você deu</label>
+              <input type="number" id="f-qtd-troca-saida" min="1" placeholder="Ex: 1" />
             </div>
-            <div class="calc-preview calc-info">
-              <span>🔃 Troca não gera impacto financeiro — apenas registra a movimentação.</span>
+            <div class="form-group">
+              <label for="f-qtd-troca-entrada">📥 Figurinhas que você recebeu</label>
+              <input type="number" id="f-qtd-troca-entrada" min="1" placeholder="Ex: 2" />
             </div>
+          </div>
+          <div class="calc-preview calc-info" id="preview-troca">
+            <span>🔃 Troca não gera impacto financeiro.</span>
           </div>
         </div>
 

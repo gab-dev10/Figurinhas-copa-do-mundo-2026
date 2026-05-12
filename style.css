@@ -400,7 +400,11 @@ tr:hover td { background: var(--surface2); }
 .badge-compra-pacote { background: #eff6ff; color: #1d4ed8; }
 .badge-compra-avulsa { background: #fffbeb; color: #b45309; }
 .badge-venda         { background: #f0fdf4; color: #15803d; }
-.badge-troca         { background: #fdf4ff; color: #7e22ce; }
+.badge-troca-saida   { background: #fef2f2; color: #dc2626; }
+.badge-troca-entrada { background: #fdf4ff; color: #7e22ce; }
+
+.card-troca-saida   { border-top-color: #dc2626; }
+.card-troca-entrada { border-top-color: #9333ea; }
 
 /* Ações na tabela */
 .btn-edit, .btn-del {

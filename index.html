@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Álbum Copa 2026 — Caixa</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+
+  <!-- ══════════════════════════════════════════
+       APLICAÇÃO PRINCIPAL
+  ══════════════════════════════════════════ -->
+  <div id="app">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-logo">⚽ Álbum <span class="logo-accent">Copa 2026</span></div>
+      <nav class="topbar-nav">
+        <button class="nav-btn active" data-page="inicio">Dashboard</button>
+        <button class="nav-btn" data-page="lancamento">Lançamento</button>
+      </nav>
+    </header>
+
+    <!-- ── PÁGINA: INÍCIO (Dashboard) ── -->
+    <main class="page active" id="page-inicio">
+
+      <!-- Bloco 1: Cards financeiros -->
+      <section class="section-title">Resumo Financeiro</section>
+      <div class="cards-grid cards-4">
+        <div class="metric-card card-gasto">
+          <span class="card-icon">💸</span>
+          <span class="card-label">Total Gasto</span>
+          <span class="card-value" id="stat-gasto">R$ 0,00</span>
+        </div>
+        <div class="metric-card card-ganho">
+          <span class="card-icon">💰</span>
+          <span class="card-label">Total Arrecadado</span>
+          <span class="card-value" id="stat-ganho">R$ 0,00</span>
+        </div>
+        <div class="metric-card card-saldo" id="card-saldo">
+          <span class="card-icon">📊</span>
+          <span class="card-label">Saldo</span>
+          <span class="card-value" id="stat-saldo">R$ 0,00</span>
+        </div>
+        <div class="metric-card card-ops">
+          <span class="card-icon">🔄</span>
+          <span class="card-label">Nº de Operações</span>
+          <span class="card-value" id="stat-ops">0</span>
+        </div>
+      </div>
+
+      <!-- Bloco 2: Cards de figurinhas -->
+      <section class="section-title">Figurinhas</section>
+      <div class="cards-grid cards-3">
+        <div class="metric-card">
+          <span class="card-icon">📦</span>
+          <span class="card-label">Compradas</span>
+          <span class="card-value" id="stat-fig-compradas">0</span>
+          <span class="card-sub" id="stat-pacotes">0 pacotes</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-icon">🏷️</span>
+          <span class="card-label">Vendidas</span>
+          <span class="card-value" id="stat-fig-vendidas">0</span>
+        </div>
+        <div class="metric-card">
+          <span class="card-icon">🔃</span>
+          <span class="card-label">Trocadas</span>
+          <span class="card-value" id="stat-fig-trocadas">0</span>
+        </div>
+      </div>
+
+      <!-- Bloco 3 + 4: Gráficos -->
+      <div class="charts-row">
+        <div class="chart-card chart-bar-wrap">
+          <div class="chart-title">Evolução Financeira Mensal</div>
+          <div class="chart-area">
+            <canvas id="chart-barras"></canvas>
+          </div>
+        </div>
+        <div class="chart-card chart-pie-wrap">
+          <div class="chart-title">Distribuição de Figurinhas</div>
+          <div class="chart-area">
+            <canvas id="chart-pizza"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 5: Histórico recente -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="chart-title">Últimos Lançamentos</span>
+          <button class="btn-link" id="btn-ver-todos">Ver todos →</button>
+        </div>
+        <div class="table-wrap">
+          <table id="tabela-recente">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Figurinhas</th>
+                <th>Valor Total</th>
+                <th>Observação</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-recente">
+              <tr><td colspan="5" class="empty-row">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- ── PÁGINA: LANÇAMENTO ── -->
+    <main class="page" id="page-lancamento">
+
+      <!-- Formulário novo lançamento -->
+      <div class="form-card" id="form-section">
+        <div class="form-title" id="form-title-label">Novo Lançamento</div>
+
+        <!-- Seletor de tipo -->
+        <div class="tipo-tabs">
+          <button class="tipo-btn active" data-tipo="COMPRA_PACOTE">📦 Compra de Pacote</button>
+          <button class="tipo-btn" data-tipo="COMPRA_AVULSA">🎴 Compra Avulsa</button>
+          <button class="tipo-btn" data-tipo="VENDA">🏷️ Venda</button>
+          <button class="tipo-btn" data-tipo="TROCA">🔃 Troca</button>
+        </div>
+
+        <!-- Campos comuns -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="f-data">Data</label>
+            <input type="date" id="f-data" />
+          </div>
+        </div>
+
+        <!-- Campos dinâmicos por tipo -->
+        <div id="campos-dinamicos">
+
+          <!-- COMPRA_PACOTE -->
+          <div class="campos-tipo active" data-campos="COMPRA_PACOTE">
+            <div class="form-row form-row-2">
+              <div class="form-group">
+                <label for="f-qtd-pacotes">Quantidade de Pacotes</label>
+                <input type="number" id="f-qtd-pacotes" min="1" placeholder="Ex: 10" />
+              </div>
+              <div class="form-group">
+                <label for="f-valor-pacote">Valor por Pacote (R$)</label>
+                <input type="number" id="f-valor-pacote" min="0.01" step="0.01" placeholder="Ex: 4.50" />
+              </div>
+            </div>
+            <div class="calc-preview" id="preview-pacote">
+              <span>Calculando...</span>
+            </div>
+          </div>
+
+          <!-- COMPRA_AVULSA -->
+          <div class="campos-tipo" data-campos="COMPRA_AVULSA">
+            <div class="form-row form-row-2">
+              <div class="form-group">
+                <label for="f-qtd-avulsa">Quantidade de Figurinhas</label>
+                <input type="number" id="f-qtd-avulsa" min="1" placeholder="Ex: 5" />
+              </div>
+              <div class="form-group">
+                <label for="f-valor-avulsa">Valor por Figurinha (R$)</label>
+                <input type="number" id="f-valor-avulsa" min="0.01" step="0.01" placeholder="Ex: 0.65" />
+              </div>
+            </div>
+            <div class="calc-preview" id="preview-avulsa">
+              <span>Calculando...</span>
+            </div>
+          </div>
+
+          <!-- VENDA -->
+          <div class="campos-tipo" data-campos="VENDA">
+            <div class="form-row form-row-2">
+              <div class="form-group">
+                <label for="f-qtd-venda">Quantidade de Figurinhas</label>
+                <input type="number" id="f-qtd-venda" min="1" placeholder="Ex: 8" />
+              </div>
+              <div class="form-group">
+                <label for="f-valor-venda">Valor de Venda por Figurinha (R$)</label>
+                <input type="number" id="f-valor-venda" min="0.01" step="0.01" placeholder="Ex: 2.50" />
+              </div>
+            </div>
+            <div class="calc-preview" id="preview-venda">
+              <span>Calculando...</span>
+            </div>
+          </div>
+
+          <!-- TROCA -->
+          <div class="campos-tipo" data-campos="TROCA">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-qtd-troca">Quantidade de Figurinhas Trocadas</label>
+                <input type="number" id="f-qtd-troca" min="1" placeholder="Ex: 4" />
+              </div>
+            </div>
+            <div class="calc-preview calc-info">
+              <span>🔃 Troca não gera impacto financeiro — apenas registra a movimentação.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observação (comum) -->
+        <div class="form-group">
+          <label for="f-obs">Observação (opcional)</label>
+          <input type="text" id="f-obs" placeholder="Ex: Banca do Zé, Feira de trocas..." />
+        </div>
+
+        <!-- Botões -->
+        <div class="form-actions">
+          <button class="btn-ghost" id="btn-cancelar-edicao" style="display:none">Cancelar edição</button>
+          <button class="btn-primary" id="btn-salvar">Salvar Lançamento</button>
+        </div>
+
+        <div class="toast" id="toast"></div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-bar">
+        <select id="filtro-tipo">
+          <option value="">Todos os tipos</option>
+          <option value="COMPRA_PACOTE">Compra de Pacote</option>
+          <option value="COMPRA_AVULSA">Compra Avulsa</option>
+          <option value="VENDA">Venda</option>
+          <option value="TROCA">Troca</option>
+        </select>
+        <div class="filtro-periodo">
+          <input type="date" id="filtro-de" />
+          <span>até</span>
+          <input type="date" id="filtro-ate" />
+        </div>
+        <button class="btn-primary btn-sm" id="btn-filtrar">Filtrar</button>
+        <button class="btn-ghost btn-sm" id="btn-limpar-filtro">Limpar</button>
+      </div>
+
+      <!-- Tabela histórico -->
+      <div class="table-card">
+        <div class="table-header">
+          <span class="chart-title">Histórico Completo</span>
+          <span class="table-count" id="count-registros">0 registros</span>
+        </div>
+        <div class="table-wrap">
+          <table id="tabela-historico">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Fig.</th>
+                <th>Pacotes</th>
+                <th>Vl. Unit.</th>
+                <th>Vl. Total</th>
+                <th>Observação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-historico">
+              <tr><td colspan="9" class="empty-row">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="paginacao">
+          <button class="btn-ghost btn-sm" id="btn-prev">← Anterior</button>
+          <span id="pag-info">Pág. 1</span>
+          <button class="btn-ghost btn-sm" id="btn-next">Próxima →</button>
+        </div>
+      </div>
+    </main>
+
+  </div><!-- /#app -->
+
+  <!-- Modal confirmação exclusão -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-title">Excluir lançamento?</div>
+      <p class="modal-text">Esta ação não pode ser desfeita.</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="modal-cancelar">Cancelar</button>
+        <button class="btn-danger" id="modal-confirmar">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
